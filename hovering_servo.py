@@ -14,7 +14,7 @@ import os
 # from ros_ws.src.crazyswarm.scripts.pycrazyswarm.crazyswarm import Crazyswarm
 from pycrazyswarm import *
 
-from Env_experiment_suc_lowpass import Env_Experiment
+from Env_experiment_lowpass_servo import Env_Experiment
 # from Env_experiment_directEuler import Env_Experiment
 from Exp_Controller.Controllers import Controllers
 
@@ -77,6 +77,7 @@ def Experiment(Texp, Tsam):
     espendulum_flag = True
     translate_flag = True
     runonce = True
+    servo_pendulum_flag = True
 
     takeoff_time = 5
     Texp = Texp + takeoff_time
@@ -108,6 +109,10 @@ def Experiment(Texp, Tsam):
             if espendulum_flag:
                 Drone_env.espendulum(Drone_ctrl, False)
                 espendulum_flag = False
+        if key == ord('f'):
+            if servo_pendulum_flag:
+                Drone_env.servo_pendulum(Drone_ctrl, False)
+                servo_pendulum_flag = False
 
         if t > stop_time:
             if land_flag:

@@ -79,23 +79,38 @@ A2 = np.array([[0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
               [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]])
 
 Bl2 = np.array([[0, 0, 0],
-              [0, 0, 0],
-              [0, 0, 0],
-              [0, 0, 0],
-              [1, 0, 0],
-              [0, 0, 0],
-              [0, 0, 0],
-              [0, 0, 0],
-              [0, 0, 0],
-              [0, 1, 0],
-              [0, 0, 0],
-              [0, 0, 1]])
+                [0, 0, 0],
+                [0, 0, 0],
+                [0, 0, 0],
+                [1, 0, 0],
+                [0, 0, 0],
+                [0, 0, 0],
+                [0, 0, 0],
+                [0, 0, 0],
+                [0, 1, 0],
+                [0, 0, 0],
+                [0, 0, 1]])
+
+C = np.array([1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+
+# servo系への拡大版
+At = np.array([
+    [A2, np.zeros((12, 1))],
+    [C]
+])
+Bt = np.array([
+    [Bl2],
+    [np.zeros(3)]
+])
 
 # 重みの決定
 # Q2 = np.diag([15, 1, 1, 1, 1, 15, 1, 1, 1, 1, 20, 1])
 # matsuda
 Q2 = np.diag([15, 1, 1, 1, 50, 15, 1, 1, 1, 50, 80, 1])
 R2 = np.diag([50, 50, 1])
+# servo拡大系での重み
+Qt = np.diag([1, 1, 1, 100, 1, 1, 50, 1, 100, 1, 1, 1, 1000])
+Rt = np.diag([1, 1, 1])
 
 # tadokoro
 # Q2 = np.diag([10, 1, 1, 1, 10, 10, 1, 1, 1, 10, 1, 1])
@@ -113,6 +128,10 @@ def lqr2(A, B, Q, R):
 
 
 P2, K2, E2 = lqr2(A2, Bl2, Q2, R2)
+Pt, Kt, Et = lqr2(At, Bt, Qt, Rt)
+
+# サーボ系での目標値
+r0 = 0.5
 
 
 class Mellinger(Mathfunction):
@@ -183,6 +202,15 @@ class Mellinger(Mathfunction):
             self.A = A2
             self.Bl = Bl2
             self.K = K2
+        # * set servo_pendulum
+        elif traj_plan == "servo_pendulum":
+            self.tmp_pos = tmp_P
+            self.ki[2] = 0.5
+            self.q_ref = np.array(
+                [[0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0]])
+            self.A = At
+            self.Bl = Bt
+            self.K = Kt
         # * escape pendulum
         elif traj_plan == "espendulum":
             self.tmp_pos = tmp_P
@@ -247,6 +275,7 @@ class Mellinger(Mathfunction):
         # self.Pe = state.Pe
         self.Pan = state.Pan
         self.Vpan = state.Vpan
+        self.y = state.diff_with_ref
 
     def Position_controller(self):
         # * set desired state of trajectory
@@ -293,6 +322,7 @@ class Mellinger(Mathfunction):
                 ]
             )
         else:
+            self.y = r0 - q*C
             q = np.array(
                 [
                     [self.P[0]],
@@ -307,6 +337,7 @@ class Mellinger(Mathfunction):
                     [self.Euler[0]],
                     [self.P[2]-0.2],
                     [self.V[2]],
+                    [self.y],
                 ]
             )
 
@@ -390,6 +421,7 @@ class Mellinger(Mathfunction):
                 ]
             )
         else:
+            y = r0 - q*C
             q = np.array(
                 [
                     [self.P[0]],
@@ -404,6 +436,7 @@ class Mellinger(Mathfunction):
                     [self.Euler[0]],
                     [self.P[2]-0.2],
                     [self.V[2]],
+                    [self.y],
                 ]
             )
 

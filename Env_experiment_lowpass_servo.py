@@ -608,6 +608,16 @@ class Env_Experiment(Frames_setup):
             init_controller=flag,
         )
 
+    # サーボ系の倒立振子用の定義
+    def servo_pendulum(self, controller, flag=False):
+        self.set_reference(
+            controller=controller,
+            traj="servo_pendulum",
+            controller_type="mellinger",
+            tmp_P=np.array([1.0, 0.0, 0.0]),  # TODO 1.0にしたほうが良い?
+            init_controller=flag,
+        )
+
     # zの高さ変更の定義
     def translate(self, controller, flag=False):
         self.set_reference(

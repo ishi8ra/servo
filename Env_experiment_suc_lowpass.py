@@ -67,7 +67,8 @@ class Env_Experiment(Frames_setup):
 
         rospy.Subscriber("/pos_command", Twist, callback=self.pos_callback)
         rospy.Subscriber("/land_command", Bool, callback=self.land_callback)
-        self.pos_pub = rospy.Publisher("/cf21/pos_LPF", PoseStamped, queue_size=10)
+        self.pos_pub = rospy.Publisher(
+            "/cf21/pos_LPF", PoseStamped, queue_size=10)
         self.cf21_pos = PoseStamped()
 
         rospy.Rate(100)
@@ -97,7 +98,8 @@ class Env_Experiment(Frames_setup):
         self.new[3] &= ~termios.ECHO
 
     def set_log_function(self):
-        self.cmd_sub = rospy.Subscriber("/cf20/log1", GenericLogData, self.log_callback)
+        self.cmd_sub = rospy.Subscriber(
+            "/cf20/log1", GenericLogData, self.log_callback)
 
     def set_paylaod_position_function(self):
         self.cmd_sub2 = rospy.Subscriber(
@@ -115,33 +117,33 @@ class Env_Experiment(Frames_setup):
         self.A = np.zeros(3)
         self.R = np.zeros((3, 3))
         self.Euler = np.zeros(3)
-        
-        #方向ベクトルdpenの定義（毎回変える）（多分行ベクトル）
+
+        # 方向ベクトルdpenの定義（毎回変える）（多分行ベクトル）
         # self.dpen = np.array([-0.00656295,-0.01319998,0.0189808])
         # self.dpen = np.array([-0.00636,-0.01328,0.01643])
-        self.dpen = np.array([-0.00368491,-0.01511539,0.022109])
-        #振子の根元から振子の重心に向かう方向ベクトル追加
+        self.dpen = np.array([-0.00368491, -0.01511539, 0.022109])
+        # 振子の根元から振子の重心に向かう方向ベクトル追加
         self.d = np.zeros(3)
-        #振子の方向ベクトルの大きさを追加
+        # 振子の方向ベクトルの大きさを追加
         self.dsize = 0
-        #振子の方向ベクトルを正規化したものを追加
+        # 振子の方向ベクトルを正規化したものを追加
         self.dunit = np.zeros(3)
-        #振子の根本位置座標追加（ドローン重心に方向ベクトルdpen足したもの）
+        # 振子の根本位置座標追加（ドローン重心に方向ベクトルdpen足したもの）
         self.Pba = np.zeros(3)
         self.Pbapre = np.zeros(3)
-        #振子の角度追加(一行目にθ、二行目にΦ)
+        # 振子の角度追加(一行目にθ、二行目にΦ)
         self.Pan = np.zeros(2)
         self.Panpre = np.zeros(2)
-        #振子の角速度(フィルター前)
+        # 振子の角速度(フィルター前)
         self.Vpanrow = np.zeros(3)
-        #振子の角速度追加（一行目にdθ、二行目にdΦ）
+        # 振子の角速度追加（一行目にdθ、二行目にdΦ）
         self.Vpan = np.zeros(3)
         self.Vpanpre = np.zeros(3)
-        #振子の重心位置
+        # 振子の重心位置
         self.Pl = np.zeros(3)
         self.Plrow = np.zeros(3)
         self.Plpre = np.zeros(3)
-        #振子の重心速度
+        # 振子の重心速度
         self.Vl = np.zeros(3)
         self.Vrow_pre = np.zeros(3)
         self.Vl_filterd = np.zeros(3)
@@ -227,7 +229,8 @@ class Env_Experiment(Frames_setup):
             quad.transform.rotation.w,
         )
         self.Euler = self.LowpassE.LowPass2D(
-            tf_conversions.transformations.euler_from_quaternion(self.Quaternion),
+            tf_conversions.transformations.euler_from_quaternion(
+                self.Quaternion),
             self.Tsam,
         )
         self.R = self.mathfunc.Euler2Rot(self.Euler)
@@ -245,26 +248,29 @@ class Env_Experiment(Frames_setup):
         # position
         self.Vlrow = self.mathfunc.deriv(self.Pl, self.Plpre, self.dt)
         self.Vl_filterd = self.LowpassVl.LowPass2D(self.Vlrow, self.Tsam)
-        
-        #振子の根本位置（ドローンの重心 + dpen)(エラー出たら個別で足す)
+
+        # 振子の根本位置（ドローンの重心 + dpen)(エラー出たら個別で足す)
         self.Pba = self.P + self.dpen
-        #振子の根元から重心への方向ベクトルの作成
+        # 振子の根元から重心への方向ベクトルの作成
         self.d = self.Pl - self.Pba
-        #方向ベクトルを正規化
-        self.dsize = np.sqrt(self.d[0]*self.d[0]+self.d[1]*self.d[1]+self.d[2]*self.d[2])
+        # 方向ベクトルを正規化
+        self.dsize = np.sqrt(self.d[0]*self.d[0] +
+                             self.d[1]*self.d[1]+self.d[2]*self.d[2])
         self.dunit[0] = self.d[0]/self.dsize
         self.dunit[1] = self.d[1]/self.dsize
         self.dunit[2] = self.d[2]/self.dsize
-        #振子の角度追加（[0]がθ、[1]がΦ)
+        # 振子の角度追加（[0]がθ、[1]がΦ)
         self.Pan[0] = math.asin(self.dunit[0])
         self.Pan[1] = -math.asin(self.dunit[1]/math.cos(self.Pan[0]))
-        #振子の角速度(フィルター前)更新([0]がdθ、[1]がdΦ)
-        self.Vpanrow[0] = self.mathfunc.deriv(self.Pan[0],self.Panpre[0],self.dt)
-        self.Vpanrow[1] = self.mathfunc.deriv(self.Pan[1],self.Panpre[1],self.dt)
-        #振子の角速度更新([0]がdθ、[1]がdΦ)
+        # 振子の角速度(フィルター前)更新([0]がdθ、[1]がdΦ)
+        self.Vpanrow[0] = self.mathfunc.deriv(
+            self.Pan[0], self.Panpre[0], self.dt)
+        self.Vpanrow[1] = self.mathfunc.deriv(
+            self.Pan[1], self.Panpre[1], self.dt)
+        # 振子の角速度更新([0]がdθ、[1]がdΦ)
         # self.Vpan[0] = self.LowpassVpan.LowPass2D(self.Vpanrow[0],self.Tsam)
         # self.Vpan[1] = self.LowpassVpan.LowPass2D(self.Vpanrow[1],self.Tsam)
-        self.Vpan = self.LowpassVpan.LowPass2D(self.Vpanrow,self.Tsam)
+        self.Vpan = self.LowpassVpan.LowPass2D(self.Vpanrow, self.Tsam)
         # vector and vector velocity
         self.q = (self.Pl - (self.P - self.Height_drone)) / np.linalg.norm(
             (self.Pl - (self.P - self.Height_drone))
@@ -282,7 +288,7 @@ class Env_Experiment(Frames_setup):
         self.Vpre[0] = self.V[0]
         self.Vpre[1] = self.V[1]
         self.Vpre[2] = self.V[2]
-        #振子の角度追加
+        # 振子の角度追加
         self.Panpre[0] = self.Pan[0]
         self.Panpre[1] = self.Pan[1]
 
@@ -317,7 +323,8 @@ class Env_Experiment(Frames_setup):
         if init_controller:
             controller.select_controller()
         if controller_type == "pid":
-            controller.set_reference(P, V, R, Euler, Wb, Euler_rate, controller_type)
+            controller.set_reference(
+                P, V, R, Euler, Wb, Euler_rate, controller_type)
         elif controller_type == "mellinger" or "QCSL" or "DI":
             controller.set_reference(traj, self.t, tmp_P)
 
@@ -525,8 +532,8 @@ class Env_Experiment(Frames_setup):
             init_controller=False,
             tmp_P=np.array([self.P[0], self.P[1], 0.0]),
         )
-    
-    #Env_experiment3.pyから引用
+
+    # Env_experiment3.pyから引用
     @run_once
     def land(self, controller):
         controller.switch_controller("pid")
@@ -580,8 +587,8 @@ class Env_Experiment(Frames_setup):
             init_controller=False,
             tmp_P=np.array([0.0, 0.0, 0.0]),
         )
-        
-    #倒立振子用の定義
+
+    # 倒立振子用の定義
     def pendulum(self, controller, flag=False):
         self.set_reference(
             controller=controller,
@@ -590,8 +597,8 @@ class Env_Experiment(Frames_setup):
             tmp_P=np.array([1.0, 0.0, 0.0]),
             init_controller=flag,
         )
-        
-    #倒立振子終了の定義
+
+    # 倒立振子終了の定義
     def espendulum(self, controller, flag=False):
         self.set_reference(
             controller=controller,
@@ -600,8 +607,8 @@ class Env_Experiment(Frames_setup):
             tmp_P=np.array([2.0, 0.0, 0.0]),
             init_controller=flag,
         )
-        
-    #zの高さ変更の定義
+
+    # zの高さ変更の定義
     def translate(self, controller, flag=False):
         self.set_reference(
             controller=controller,

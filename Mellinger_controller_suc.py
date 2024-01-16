@@ -6,19 +6,19 @@ references
   - Differential Flatness of Quadrotor Dynamics Subject to Rotor Drag for Accurate Tracking of High-Speed Trajectories
 """
 
+from tools.Mathfunction import Mathfunction
+from Exp_Controller.Trajectory import Trajectory
+from scipy import linalg
+import math
+import numpy as np
 import sys
 
 sys.path.append("../")
 
-import numpy as np
-import math
-from scipy import linalg
-from Exp_Controller.Trajectory import Trajectory
-from tools.Mathfunction import Mathfunction
 
 # 初期設定
-#r = (2/3)*0.3  # r(λ)=2/3Lp 長:0.3m
-#r = (2/3)*0.2
+# r = (2/3)*0.3  # r(λ)=2/3Lp 長:0.3m
+# r = (2/3)*0.2
 r = (2/3)*1
 g = 9.8  # 重力加速度
 
@@ -62,45 +62,48 @@ def lqr1(A, B, Q, R):
 
     return P1, K1, E1
 
+
 P1, K1, E1 = lqr1(A1, Bl1, Q1, R1)
 
-A2 = np.array([[0,1,0,0,0,0,0,0,0,0,0,0],
-              [0,0,0,0,g,0,0,0,0,0,0,0],
-              [0,0,0,1,0,0,0,0,0,0,0,0],
-              [0,0,g/r,0,-g/r,0,0,0,0,0,0,0],
-              [0,0,0,0,0,0,0,0,0,0,0,0],
-              [0,0,0,0,0,0,1,0,0,0,0,0],
-              [0,0,0,0,0,0,0,0,0,-g,0,0],
-              [0,0,0,0,0,0,0,0,1,0,0,0],
-              [0,0,0,0,0,0,0,g/r,0,-g/r,0,0],
-              [0,0,0,0,0,0,0,0,0,0,0,0],
-              [0,0,0,0,0,0,0,0,0,0,0,1],
-              [0,0,0,0,0,0,0,0,0,0,0,0]])
+A2 = np.array([[0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+              [0, 0, 0, 0, g, 0, 0, 0, 0, 0, 0, 0],
+              [0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+              [0, 0, g/r, 0, -g/r, 0, 0, 0, 0, 0, 0, 0],
+              [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+              [0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+              [0, 0, 0, 0, 0, 0, 0, 0, 0, -g, 0, 0],
+              [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+              [0, 0, 0, 0, 0, 0, 0, g/r, 0, -g/r, 0, 0],
+              [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+              [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+              [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]])
 
-Bl2 = np.array([[0,0,0],
-               [0,0,0],
-               [0,0,0],
-               [0,0,0],
-               [1,0,0],
-               [0,0,0],
-               [0,0,0],
-               [0,0,0],
-               [0,0,0],
-               [0,1,0],
-               [0,0,0],
-               [0,0,1]])
+Bl2 = np.array([[0, 0, 0],
+               [0, 0, 0],
+               [0, 0, 0],
+               [0, 0, 0],
+               [1, 0, 0],
+               [0, 0, 0],
+               [0, 0, 0],
+               [0, 0, 0],
+               [0, 0, 0],
+               [0, 1, 0],
+               [0, 0, 0],
+               [0, 0, 1]])
 
 # 重みの決定
 # Q2 = np.diag([15, 1, 1, 1, 1, 15, 1, 1, 1, 1, 20, 1])
-#matsuda
+# matsuda
 Q2 = np.diag([15, 1, 1, 1, 50, 15, 1, 1, 1, 50, 80, 1])
 R2 = np.diag([50, 50, 1])
 
-#tadokoro
-#Q2 = np.diag([10, 1, 1, 1, 10, 10, 1, 1, 1, 10, 1, 1])
-#R2 = np.diag([1, 1, 0.3])
+# tadokoro
+# Q2 = np.diag([10, 1, 1, 1, 10, 10, 1, 1, 1, 10, 1, 1])
+# R2 = np.diag([1, 1, 0.3])
 
 # lqr法
+
+
 def lqr2(A, B, Q, R):
     P2 = linalg.solve_continuous_are(A, B, Q, R)
     K2 = linalg.inv(R).dot(B.T).dot(P2)
@@ -108,7 +111,9 @@ def lqr2(A, B, Q, R):
 
     return P2, K2, E2
 
+
 P2, K2, E2 = lqr2(A2, Bl2, Q2, R2)
+
 
 class Mellinger(Mathfunction):
     def __init__(self, dt):
@@ -121,7 +126,7 @@ class Mellinger(Mathfunction):
         print("Init Mellinger Controller")
 
         # init trajectory
-        self.q_ref = np.array([[0], [0], [0], [0], [0], [0] , [0], [0]])
+        self.q_ref = np.array([[0], [0], [0], [0], [0], [0], [0], [0]])
         self.A = A1
         self.Bl = Bl1
         self.K = K1
@@ -160,12 +165,12 @@ class Mellinger(Mathfunction):
         self.tmp_pos = np.zeros(3)
         self.Pi = np.zeros(3)
         self.ki = np.array([0.0, 0.0, 0.0])
-        
+
         # * set takeoff position for polynominal land trajectory
         if traj_plan == "takeoff" or traj_plan == "takeoff_50cm":
             self.tmp_pos = tmp_P
             self.ki[2] = 0.5
-            self.q_ref = np.array([[0], [0], [0], [0], [0], [0] , [0], [0]])
+            self.q_ref = np.array([[0], [0], [0], [0], [0], [0], [0], [0]])
             self.A = A1
             self.Bl = Bl1
             self.K = K1
@@ -173,7 +178,8 @@ class Mellinger(Mathfunction):
         elif traj_plan == "pendulum":
             self.tmp_pos = tmp_P
             self.ki[2] = 0.5
-            self.q_ref = np.array([[0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0]])
+            self.q_ref = np.array(
+                [[0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0]])
             self.A = A2
             self.Bl = Bl2
             self.K = K2
@@ -181,7 +187,7 @@ class Mellinger(Mathfunction):
         elif traj_plan == "espendulum":
             self.tmp_pos = tmp_P
             self.ki[2] = 0.5
-            self.q_ref = np.array([[0], [0], [0], [0], [0], [0] , [0], [0]])
+            self.q_ref = np.array([[0], [0], [0], [0], [0], [0], [0], [0]])
             self.A = A1
             self.Bl = Bl1
             self.K = K1
@@ -189,11 +195,11 @@ class Mellinger(Mathfunction):
         elif traj_plan == "translate":
             self.tmp_pos = tmp_P
             self.ki[2] = 0.5
-            self.q_ref = np.array([[0], [0], [0], [0], [0], [0] , [0], [0]])
+            self.q_ref = np.array([[0], [0], [0], [0], [0], [0], [0], [0]])
             self.A = A1
             self.Bl = Bl1
             self.K = K1
-        
+
         # * set landing position for polynominal land trajectory（振子載せたまま着地する場合）
         # elif traj_plan == "land" or traj_plan == "land_50cm":
         #     self.tmp_pos = tmp_P
@@ -237,8 +243,8 @@ class Mellinger(Mathfunction):
         self.V = state.V
         self.R = state.R
         self.Euler = state.Euler
-        #振子追加
-        #self.Pe = state.Pe
+        # 振子追加
+        # self.Pe = state.Pe
         self.Pan = state.Pan
         self.Vpan = state.Vpan
 
@@ -262,48 +268,48 @@ class Mellinger(Mathfunction):
         # q = [x,dx,θ,dθ,β,y,dy,Φ,dΦ,γ,z,dz]
         if (self.tmp_pos == np.array([0.0, 0.0, 0.0])).all():
             q = np.array(
-            [
-                [self.P[0]],
-                [self.V[0]],
-                [self.Euler[1]],
-                [self.P[1]],
-                [self.V[1]],
-                [self.Euler[0]],
-                [self.P[2]-0.2],
-                [self.V[2]],
-            ]
+                [
+                    [self.P[0]],
+                    [self.V[0]],
+                    [self.Euler[1]],
+                    [self.P[1]],
+                    [self.V[1]],
+                    [self.Euler[0]],
+                    [self.P[2]-0.2],
+                    [self.V[2]],
+                ]
             )
         elif (self.tmp_pos == np.array([2.0, 0.0, 0.0])).all():
             q = np.array(
-            [
-                [self.P[0]],
-                [self.V[0]],
-                [self.Euler[1]],
-                [self.P[1]],
-                [self.V[1]],
-                [self.Euler[0]],
-                [self.P[2]-0.2],
-                [self.V[2]],
-            ]
+                [
+                    [self.P[0]],
+                    [self.V[0]],
+                    [self.Euler[1]],
+                    [self.P[1]],
+                    [self.V[1]],
+                    [self.Euler[0]],
+                    [self.P[2]-0.2],
+                    [self.V[2]],
+                ]
             )
         else:
             q = np.array(
-            [
-                [self.P[0]],
-                [self.V[0]],
-                [self.Pan[0]],
-                [self.Vpan[0]],
-                [self.Euler[1]],
-                [self.P[1]],
-                [self.V[1]],
-                [self.Pan[1]],
-                [self.Vpan[1]],
-                [self.Euler[0]],
-                [self.P[2]-0.2],
-                [self.V[2]],
-            ]
+                [
+                    [self.P[0]],
+                    [self.V[0]],
+                    [self.Pan[0]],
+                    [self.Vpan[0]],
+                    [self.Euler[1]],
+                    [self.P[1]],
+                    [self.V[1]],
+                    [self.Pan[1]],
+                    [self.Vpan[1]],
+                    [self.Euler[0]],
+                    [self.P[2]-0.2],
+                    [self.V[2]],
+                ]
             )
-            
+
         q_div = q - self.q_ref
         u = -np.dot(self.K, q_div)
 
@@ -312,11 +318,12 @@ class Mellinger(Mathfunction):
         a = (
             ad
             + g
-            + (g / 2) * (self.Euler[1] * self.Euler[1] + self.Euler[0] * self.Euler[0])
+            + (g / 2) * (self.Euler[1] * self.Euler[1] +
+                         self.Euler[0] * self.Euler[0])
         )
 
         self.input_acc = a
-        
+
     def Attitude_controller(self):
         # # * set desired state of trajectory
         # traj_acc = self.trajectory.traj_acc
@@ -358,55 +365,55 @@ class Mellinger(Mathfunction):
         # q = [x,dx,θ,dθ,β,y,dy,Φ,dΦ,γ,z,dz]
         if (self.tmp_pos == np.array([0.0, 0.0, 0.0])).all():
             q = np.array(
-            [
-                [self.P[0]],
-                [self.V[0]],
-                [self.Euler[1]],
-                [self.P[1]],
-                [self.V[1]],
-                [self.Euler[0]],
-                [self.P[2]-0.2],
-                [self.V[2]],
-            ]
+                [
+                    [self.P[0]],
+                    [self.V[0]],
+                    [self.Euler[1]],
+                    [self.P[1]],
+                    [self.V[1]],
+                    [self.Euler[0]],
+                    [self.P[2]-0.2],
+                    [self.V[2]],
+                ]
             )
         elif (self.tmp_pos == np.array([2.0, 0.0, 0.0])).all():
             q = np.array(
-            [
-                [self.P[0]],
-                [self.V[0]],
-                [self.Euler[1]],
-                [self.P[1]],
-                [self.V[1]],
-                [self.Euler[0]],
-                [self.P[2]-0.2],
-                [self.V[2]],
-            ]
+                [
+                    [self.P[0]],
+                    [self.V[0]],
+                    [self.Euler[1]],
+                    [self.P[1]],
+                    [self.V[1]],
+                    [self.Euler[0]],
+                    [self.P[2]-0.2],
+                    [self.V[2]],
+                ]
             )
         else:
             q = np.array(
-            [
-                [self.P[0]],
-                [self.V[0]],
-                [self.Pan[0]],
-                [self.Vpan[0]],
-                [self.Euler[1]],
-                [self.P[1]],
-                [self.V[1]],
-                [self.Pan[1]],
-                [self.Vpan[1]],
-                [self.Euler[0]],
-                [self.P[2]-0.2],
-                [self.V[2]],
-            ]
+                [
+                    [self.P[0]],
+                    [self.V[0]],
+                    [self.Pan[0]],
+                    [self.Vpan[0]],
+                    [self.Euler[1]],
+                    [self.P[1]],
+                    [self.V[1]],
+                    [self.Pan[1]],
+                    [self.Vpan[1]],
+                    [self.Euler[0]],
+                    [self.P[2]-0.2],
+                    [self.V[2]],
+                ]
             )
-            
+
         q_div = q - self.q_ref
         u = -np.dot(self.K, q_div)
 
         # ωxとωy(ωxとωyが逆の可能性あり)
         ox = u[1]
         oy = u[0]
-        #oz = -10 * self.Euler[2]
+        # oz = -10 * self.Euler[2]
         oz = -1 * self.Euler[2]
 
         """
@@ -418,8 +425,8 @@ class Mellinger(Mathfunction):
 
         # calculate input Body angular velocity
 
-        #self.input_Wb = np.array([[ox], [oy], [oz]], dtype=object)
-        #self.input_Wb = np.array([ox, oy, oz])
+        # self.input_Wb = np.array([[ox], [oy], [oz]], dtype=object)
+        # self.input_Wb = np.array([ox, oy, oz])
         self.input_Wb[0] = ox
         self.input_Wb[1] = oy
         self.input_Wb[2] = oz
@@ -428,7 +435,7 @@ class Mellinger(Mathfunction):
         ten2 = ten1.tolist()
         self.input_Wb = ten2
         """
-        
+
         # self.Euler_nom[1] = np.arctan(
         #     (traj_acc[0] * np.cos(traj_yaw) + traj_acc[1] * np.sin(traj_yaw))
         #     / (traj_acc[2])
